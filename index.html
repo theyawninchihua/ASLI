@@ -138,7 +138,7 @@ async function loadReports() {
   pdfs.sort((a,b)=>{
     if(a.year !== b.year) return a.year.localeCompare(b.year);
     if(a.makeModel !== b.makeModel) return a.makeModel.localeCompare(b.makeModel);
-    return a.equipment.localeCompare(b.equipment);
+    return b.equipment.localeCompare(e.equipment);
   });
 
   setupFilters(pdfs);
