@@ -71,6 +71,12 @@
         border-radius: 0;
         text-transform: uppercase;
     }
+
+    #result-count {
+        margin-bottom: 1rem;
+        font-size: 1em;
+        color: #ccc;
+    }
 </style>
 </head>
 <body>
@@ -85,6 +91,7 @@
 </p>
 
 <div style="margin-bottom:2rem; display:flex; gap:1rem; color:white;">
+  <select id="f-makemodel" style="background:#333;color:white;padding:0.5rem;border:1px solid #555;border-radius:0;"></select>
   <select id="f-equipment" style="background:#333;color:white;padding:0.5rem;border:1px solid #555;border-radius:0;"></select>
   <select id="f-segment" style="background:#333;color:white;padding:0.5rem;border:1px solid #555;border-radius:0;"></select>
   <select id="f-bodystyle" style="background:#333;color:white;padding:0.5rem;border:1px solid #555;border-radius:0;"></select>
@@ -92,6 +99,7 @@
   <select id="f-grade" style="background:#333;color:white;padding:0.5rem;border:1px solid #555;border-radius:0;"></select>
 </div>
 
+<div id="result-count"></div>
 <div id="results"></div>
 
 <script>
@@ -134,35 +142,34 @@ async function loadReports() {
   });
 
   setupFilters(pdfs);
-  render(pdfs);
+  applyFilters(pdfs);
 }
 
 function setupFilters(pdfs) {
   const years = [...new Set(pdfs.map(p=>p.year))].sort();
   const grades = ["A","B","C","D","E","F"];
+  const makeModels = [...new Set(pdfs.map(p=>p.makeModel))].sort();
   const equipments = [...new Set(pdfs.map(p=>p.equipment))].sort();
   const segments = [...new Set(pdfs.map(p=>p.segment))].sort();
   const bodystyles = [...new Set(pdfs.map(p=>p.bodystyle))].sort();
 
   const yearSelect = document.getElementById("f-year");
   const gradeSelect = document.getElementById("f-grade");
+  const makeModelSelect = document.getElementById("f-makemodel");
   const equipmentSelect = document.getElementById("f-equipment");
   const segmentSelect = document.getElementById("f-segment");
   const bodySelect = document.getElementById("f-bodystyle");
 
   yearSelect.innerHTML = `<option value="">All years</option>` + years.map(y=>`<option value="${y}">${y}</option>`).join("");
-
-  const gradeColors = {A:"#00C000",B:"#83C900",C:"#C9A800",D:"#C97600",E:"#7D3800",F:"#C90000"};
-  gradeSelect.innerHTML = `<option value="">All grades</option>` + grades.map(g=>`<option value="${g}" style="background:${gradeColors[g]};color:black;">${g}</option>`).join("");
-
+  gradeSelect.innerHTML = `<option value="">All grades</option>` + grades.map(g=>`<option value="${g}">${g}</option>`).join("");
+  makeModelSelect.innerHTML = `<option value="">All makes/models</option>` + makeModels.map(m=>`<option value="${m}">${m}</option>`).join("");
   equipmentSelect.innerHTML = `<option value="">All variants</option>` + equipments.map(e=>`<option value="${e}">${e}</option>`).join("");
-
   segmentSelect.innerHTML = `<option value="">All segments</option>` + segments.map(s=>`<option value="${s}">${s}</option>`).join("");
-
   bodySelect.innerHTML = `<option value="">All body styles</option>` + bodystyles.map(b=>`<option value="${b}">${b}</option>`).join("");
 
   yearSelect.onchange = ()=>applyFilters(pdfs);
   gradeSelect.onchange = ()=>applyFilters(pdfs);
+  makeModelSelect.onchange = ()=>applyFilters(pdfs);
   equipmentSelect.onchange = ()=>applyFilters(pdfs);
   segmentSelect.onchange = ()=>applyFilters(pdfs);
   bodySelect.onchange = ()=>applyFilters(pdfs);
@@ -171,6 +178,7 @@ function setupFilters(pdfs) {
 function applyFilters(pdfs){
   const yearVal = document.getElementById("f-year").value;
   const gradeVal = document.getElementById("f-grade").value;
+  const makeVal = document.getElementById("f-makemodel").value;
   const equipVal = document.getElementById("f-equipment").value;
   const segVal = document.getElementById("f-segment").value;
   const bodyVal = document.getElementById("f-bodystyle").value;
@@ -178,6 +186,7 @@ function applyFilters(pdfs){
   const filtered = pdfs.filter(p =>
     (!yearVal || p.year === yearVal) &&
     (!gradeVal || p.grade === gradeVal) &&
+    (!makeVal || p.makeModel === makeVal) &&
     (!equipVal || p.equipment === equipVal) &&
     (!segVal || p.segment === segVal) &&
     (!bodyVal || p.bodystyle === bodyVal)
@@ -188,7 +197,9 @@ function applyFilters(pdfs){
 
 function render(pdfs) {
   const container = document.getElementById("results");
+  const countDiv = document.getElementById("result-count");
   container.innerHTML = "";
+  countDiv.innerHTML = `Showing ${pdfs.length} result${pdfs.length===1?"":"s"}`;
 
   if(pdfs.length === 0){
     container.innerHTML = `<div style="color:white;margin-top:2rem;">No matching results.</div>`;
@@ -213,7 +224,7 @@ function render(pdfs) {
           <div class="equipment">${p.equipment} safety equipment</div>
           <a href="${p.url}" target="_blank">Download report</a>
         </div>
-        <div class="grade-box" style="background:${color};"><h1>${p.grade}</h1></div>
+        <div class="grade-box" style="background:${color};">${p.grade}</div>
       </div>`;
   });
 }
