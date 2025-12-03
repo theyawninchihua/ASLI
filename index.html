@@ -147,7 +147,7 @@ async function loadReports() {
 
 function setupFilters(pdfs) {
   const years = [...new Set(pdfs.map(p=>p.year))].sort();
-  const grades = ["A","B","C","D","E","F"];
+  const grades = ["A","B","C","D","E"];
   const makeModels = [...new Set(pdfs.map(p=>p.makeModel))].sort();
   const equipments = [...new Set(pdfs.map(p=>p.equipment))].sort();
   const segments = [...new Set(pdfs.map(p=>p.segment))].sort();
@@ -207,7 +207,7 @@ function render(pdfs) {
   }
 
   let currentYear = null;
-  const gradeColors = {A:"#00C000",B:"#83C900",C:"#C9A800",D:"#C97600",E:"#7D3800",F:"#C90000"};
+  const gradeColors = {A:"#00C000",B:"#83C900",C:"#C9A800",D:"#C97600",E:"#C90000"};
 
   pdfs.forEach(p=>{
     if(p.year !== currentYear){
