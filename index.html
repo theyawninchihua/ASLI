@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Auto Safety Library India</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+@font-face {
+    font-family: 'CMU Sans Serif';
+    src: url('fonts/cmunss.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    background: #000;
+    color: #eee;
+    font-family: 'CMU Sans Serif', system-ui, sans-serif;
+    margin: 40px auto;
+    max-width: 900px;
+}
+
+h1 { margin-bottom: 0.4em; }
+h2 { margin-top: 2.2em; color: #ccc; }
+h3 { margin-top: 1.4em; color: #aaa; font-weight: normal; }
+
+hr {
+    border: 0;
+    border-top: 1px solid #444;
+    margin-bottom: 1.2em;
+}
+
+p {
+    color: #bbb;
+    max-width: 800px;
+    line-height: 1.45;
+}
+
+.controls {
+    margin: 2rem 0;
+}
+
+select {
+    background: #333;
+    color: white;
+    padding: 0.5rem;
+    border: 1px solid #555;
+    border-radius: 0;
+    font-family: inherit;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px;
+    margin: 12px 0;
+    background: #1e1e1e;
+    border: 1px solid #333;
+}
+
+.left {
+    display: flex;
+    flex-direction: column;
+}
+
+.left .title {
+    font-size: 1.05em;
+    color: #fff;
+}
+
+.left .equipment {
+    font-size: 0.95em;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.left .variant {
+    font-size: 0.8em;
+    color: #ccc;
+}
+
+.badge-box {
+    width: 140px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-transform: uppercase;
+    font-size: 0.75em;
+    line-height: 1.1;
+    color: black;
+}
+
+.badge-best {
+    background: #00C000;
+}
+
+.badge-avoid {
+    background: #C90000;
+}
+
+.badge-box .small {
+    font-size: 0.7em;
+}
+
+.badge-box .main {
+    font-size: 0.85em;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Auto Safety Library India</h1>
+
+<p>
+Here lies the safety specification of cars that were once sold in India.<br><br>
+A vehicle might have had multiple specifications during a model year. There is no guarantee on the part of the year that the retrieved specification is from. When in doubt, always consult the manufacturer or official sources.
+</p>
+
+<div class="controls">
+    Sort by:
+    <select id="sortBy">
+        <option value="Year">Year</option>
+        <option value="Segment">Segment</option>
+    </select>
+</div>
+
+<div id="results"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+const evaluationProtocol = {
+    features: {
+        frontal_airbag_driver: { weight: 10 },
+        frontal_airbag_front_passenger: { weight: 10 },
+        side_airbag_thorax_front: { weight: 7 },
+        side_airbag_thorax_rear: { weight: 3 },
+        side_airbag_curtain: { weight: 10 },
+        three_point_belt_centre: { weight: 10 },
+        head_restraint_outboard: { weight: 2 },
+        head_restraint_outboard_adjustable: { weight: 1 },
+        head_restraint_centre: { weight: 1 },
+        head_restraint_centre_adjustable: { weight: 1 },
+        isofix_lower_anchorages_outboard: { weight: 5 },
+        abs: { weight: 10 },
+        esc: { weight: 20 },
+        sbr_driver: { weight: 4 },
+        sbr_front_passenger: { weight: 3 },
+        sbr_rear: { weight: 3 }
+    }
+};
+
+const SHEET_CSV_URL =
+'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5UQVUfEmi5jM0CGfExj6UE1K3WwcaD9iN1-lnIh0blsMle1PH0w6J_o1S3X_sZHjEKMRcUmc_m34K/pub?output=csv';
+
+Papa.parse(SHEET_CSV_URL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: res => init(res.data)
+});
+
+let cars = [];
+
+function init(data) {
+    cars = data;
+    computeScores();
+    render();
+    document.getElementById("sortBy").onchange = render;
+}
+
+function computeScores() {
+    const groups = {};
+
+    cars.forEach(c => {
+        const key = `${c.Year}-${c.Segment}`;
+        groups[key] = groups[key] || [];
+        groups[key].push(c);
+
+        let score = 0; 
+        for (const f in evaluationProtocol.features) {
+            if ((c[f] || "no").toLowerCase() === "yes") {
+                score += evaluationProtocol.features[f].weight;
+            }
+        }
+        c._score = score;
+    });
+
+    Object.values(groups).forEach(list => {
+        const maxScore = Math.max(...list.map(c => c._score));
+        list.forEach(c => {
+            if (c._score < 20) {
+                c._badge = "Not Recommended";
+            } else if (c._score >= maxScore - 10) {
+                c._badge = "Best-in-Class";
+            } else {
+                c._badge = "";
+            }
+        });
+    });
+}
+
+function render() {
+    const sortBy = document.getElementById("sortBy").value;
+    const other = sortBy === "Year" ? "Segment" : "Year";
+    const container = document.getElementById("results");
+    container.innerHTML = "";
+
+    const groups = {};
+    cars.forEach(c => {
+        groups[c[sortBy]] = groups[c[sortBy]] || {};
+        groups[c[sortBy]][c[other]] = groups[c[sortBy]][c[other]] || [];
+        groups[c[sortBy]][c[other]].push(c);
+    });
+
+    Object.keys(groups).sort().forEach(primary => {
+        container.innerHTML += `<h2>${primary}</h2><hr>`;
+        Object.keys(groups[primary]).sort().forEach(secondary => {
+            container.innerHTML += `<h3>${secondary}</h3>`;
+            groups[primary][secondary]
+                .sort((a,b) => a._score - b._score)
+                .forEach(c => {
+                    container.innerHTML += `
+                    <div class="item">
+                        <div class="left">
+                            <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
+                            <div class="equipment">with ${c["Equipment Level"]} equipment</div>
+                            <div class="variant">${c.Variant}</div>
+                        </div>
+                        ${renderBadge(c)}
+                    </div>`;
+                });
+        });
+    });
+}
+
+function renderBadge(c) {
+    if (!c._badge) return "";
+    if (c._badge === "Not Recommended") {
+        return `<div class="badge-box badge-avoid">
+            <div class="main">Not<br>Recommended</div>
+        </div>`;
+    }
+    return `<div class="badge-box badge-best">
+        <div class="small">${c.Segment}-segment</div>
+        <div class="main">Best-in-Class</div>
+        <div class="small">${c.Year}</div>
+    </div>`;
+}
+</script>
+
+</body>
+</html>
