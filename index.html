@@ -122,17 +122,20 @@ Here lies the safety specification of cars that were once sold in India.<br><br>
 A vehicle might have had multiple specifications during a model year. There is no guarantee on the part of the year that the retrieved specification is from. When in doubt, always consult the manufacturer or official sources.
 </p>
 
-<div class="controls">
-    Sort by:
-    <select id="sortBy">
-        <option value="Year">Year</option>
-        <option value="Segment">Segment</option>
-    </select>
-</div>
 
+<div id="controls-container">
+    <div class="controls" id="main-controls">
+        Sort by:
+        <select id="sortBy">
+            <option value="Year">Year</option>
+            <option value="Segment">Segment</option>
+        </select>
+    </div>
+</div>
 <div id="results"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
 
 <script>
 const evaluationProtocol = {
@@ -159,6 +162,39 @@ const evaluationProtocol = {
 const SHEET_CSV_URL =
 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5UQVUfEmi5jM0CGfExj6UE1K3WwcaD9iN1-lnIh0blsMle1PH0w6J_o1S3X_sZHjEKMRcUmc_m34K/pub?output=csv';
 
+let cars = [];
+
+// --- Canonical Car ID helpers ---
+function canonicalCarId(car) {
+    // Use Year, Brand, Model, Equipment Level, Variant, joined by '__', url-encoded
+    // (order and separator must be deterministic and unique)
+    const fields = [car.Year, car.Brand, car.Model, car["Equipment Level"], car.Variant];
+    return fields.map(f => encodeURIComponent((f||'').replace(/\s+/g, '_'))).join('__');
+}
+
+function findCarById(id) {
+    for (const c of cars) {
+        if (canonicalCarId(c) === id) return c;
+    }
+    return null;
+}
+
+function getQueryParam(name) {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name);
+}
+
+// --- Routing logic ---
+function route() {
+    const carId = getQueryParam('car');
+    if (carId) {
+        renderCarPage(carId);
+    } else {
+        renderMainPage();
+    }
+}
+
+// --- CSV load and init ---
 Papa.parse(SHEET_CSV_URL, {
     download: true,
     header: true,
@@ -166,23 +202,20 @@ Papa.parse(SHEET_CSV_URL, {
     complete: res => init(res.data)
 });
 
-let cars = [];
-
 function init(data) {
     cars = data;
     computeScores();
-    render();
-    document.getElementById("sortBy").onchange = render;
+    route();
+    // Attach sort handler only for main page
+    document.getElementById("sortBy").onchange = route;
 }
 
 function computeScores() {
     const groups = {};
-
     cars.forEach(c => {
         const key = `${c.Year}-${c.Segment}`;
         groups[key] = groups[key] || [];
         groups[key].push(c);
-
         let score = 0; 
         for (const f in evaluationProtocol.features) {
             if ((c[f] || "no").toLowerCase() === "yes") {
@@ -190,8 +223,8 @@ function computeScores() {
             }
         }
         c._score = score;
+        c._id = canonicalCarId(c);
     });
-
     Object.values(groups).forEach(list => {
         const maxScore = Math.max(...list.map(c => c._score));
         list.forEach(c => {
@@ -206,19 +239,19 @@ function computeScores() {
     });
 }
 
-function render() {
+// --- Main page rendering ---
+function renderMainPage() {
+    document.getElementById('main-controls').style.display = '';
     const sortBy = document.getElementById("sortBy").value;
     const other = sortBy === "Year" ? "Segment" : "Year";
     const container = document.getElementById("results");
     container.innerHTML = "";
-
     const groups = {};
     cars.forEach(c => {
         groups[c[sortBy]] = groups[c[sortBy]] || {};
         groups[c[sortBy]][c[other]] = groups[c[sortBy]][c[other]] || [];
         groups[c[sortBy]][c[other]].push(c);
     });
-
     Object.keys(groups).sort().forEach(primary => {
         container.innerHTML += `<h2>${primary}</h2><hr>`;
         Object.keys(groups[primary]).sort().forEach(secondary => {
@@ -227,6 +260,7 @@ function render() {
                 .sort((a,b) => a._score - b._score)
                 .forEach(c => {
                     container.innerHTML += `
+                    <a href="index.html?car=${c._id}" style="text-decoration:none;color:inherit;">
                     <div class="item">
                         <div class="left">
                             <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
@@ -234,10 +268,51 @@ function render() {
                             <div class="variant">${c.Variant}</div>
                         </div>
                         ${renderBadge(c)}
-                    </div>`;
+                    </div>
+                    </a>`;
                 });
         });
     });
+}
+
+// --- Car page rendering ---
+function renderCarPage(carId) {
+    document.getElementById('main-controls').style.display = 'none';
+    const container = document.getElementById("results");
+    container.innerHTML = "";
+    const car = findCarById(carId);
+    if (!car) {
+        container.innerHTML = `<div style='margin:2em 0;'>Result not found.<br><br><a href='index.html'>Back to list</a></div>`;
+        return;
+    }
+    // Title
+    container.innerHTML += `<h2 style='margin-bottom:0.2em;'>${car.Year} ${car.Brand} ${car.Model}</h2>`;
+    container.innerHTML += `<div style='color:#ccc;margin-bottom:0.7em;'>${car.Variant} &mdash; ${car["Equipment Level"]} equipment</div>`;
+    // Badge
+    container.innerHTML += `<div style='margin-bottom:1.2em;'>${renderBadge(car)}</div>`;
+    // Score
+    container.innerHTML += `<div style='font-size:1.1em;margin-bottom:1.2em;'>Total score: <b>${car._score}</b></div>`;
+    // Features table
+    container.innerHTML += renderFeaturesTable(car);
+    // Back link
+    container.innerHTML += `<div style='margin-top:2em;'><a href='index.html'>&larr; Back to list</a></div>`;
+}
+
+function renderFeaturesTable(car) {
+    let html = `<table style='background:#181818;border:1px solid #333;border-radius:4px;width:100%;max-width:500px;margin-bottom:1.5em;'>`;
+    html += `<tr><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Feature</th><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Present?</th></tr>`;
+    for (const f in evaluationProtocol.features) {
+        const label = featureLabel(f);
+        const val = (car[f]||'no').toLowerCase() === 'yes' ? 'Yes' : 'No';
+        html += `<tr><td style='padding:8px;color:#ccc;'>${label}</td><td style='padding:8px;color:${val==='Yes'?'#0f0':'#c44'};'>${val}</td></tr>`;
+    }
+    html += `</table>`;
+    return html;
+}
+
+function featureLabel(f) {
+    // Convert snake_case to readable label
+    return f.replace(/_/g, ' ').replace(/\b([a-z])/g, x => x.toUpperCase());
 }
 
 function renderBadge(c) {
@@ -253,6 +328,11 @@ function renderBadge(c) {
         <div class="small">${c.Year}</div>
     </div>`;
 }
+
+// --- Listen to browser navigation (back/forward) ---
+window.addEventListener('popstate', () => {
+    if (cars.length) route();
+});
 </script>
 
 </body>
