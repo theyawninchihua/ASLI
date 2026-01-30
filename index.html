@@ -163,13 +163,47 @@ const SHEET_CSV_URL =
 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5UQVUfEmi5jM0CGfExj6UE1K3WwcaD9iN1-lnIh0blsMle1PH0w6J_o1S3X_sZHjEKMRcUmc_m34K/pub?output=csv';
 
 let cars = [];
+let featureLabels = {}; // mapping internal feature id -> display name (from specsheet.json)
+// Load specsheet.json (optional; fallback to internal names)
+const specPromise = fetch('specsheet.json')
+    .then(r => r.ok ? r.json() : Promise.reject('specsheet not found'))
+    .then(j => {
+        // spec file may have nested arrays/objects; extract all 'features' maps
+        function extract(node) {
+            if (!node) return;
+            if (Array.isArray(node)) {
+                node.forEach(extract);
+                return;
+            }
+            if (typeof node === 'object') {
+                if (node.features && typeof node.features === 'object') {
+                    Object.assign(featureLabels, node.features);
+                }
+                // also check subcategories or nested arrays
+                if (node.subcategories) extract(node.subcategories);
+                Object.values(node).forEach(v => {
+                    if (typeof v === 'object') extract(v);
+                });
+            }
+        }
+        extract(j);
+    })
+    .catch(() => {
+        featureLabels = {};
+    });
 
 // --- Canonical Car ID helpers ---
 function canonicalCarId(car) {
-    // Use Year, Brand, Model, Equipment Level, Variant, joined by '__', url-encoded
-    // (order and separator must be deterministic and unique)
+    // Deterministic decoded ID: join fields with '__', normalize Unicode (NFC),
+    // replace internal whitespace with underscores. Do NOT percent-encode here.
     const fields = [car.Year, car.Brand, car.Model, car["Equipment Level"], car.Variant];
-    return fields.map(f => encodeURIComponent((f||'').replace(/\s+/g, '_'))).join('__');
+    const parts = fields.map(f => {
+        const s = (f === undefined || f === null) ? '' : String(f);
+        // normalize to composed form so accents compare consistently
+        const norm = s.normalize ? s.normalize('NFC') : s;
+        return norm.trim().replace(/\s+/g, '_');
+    });
+    return parts.join('__');
 }
 
 function findCarById(id) {
@@ -205,9 +239,13 @@ Papa.parse(SHEET_CSV_URL, {
 function init(data) {
     cars = data;
     computeScores();
-    route();
-    // Attach sort handler only for main page
-    document.getElementById("sortBy").onchange = route;
+    // Wait for specsheet (labels) to be ready before routing/rendering,
+    // but proceed even if specPromise fails.
+    specPromise.finally(() => {
+        route();
+        // Attach sort handler only for main page
+        document.getElementById("sortBy").onchange = route;
+    });
 }
 
 function computeScores() {
@@ -259,8 +297,10 @@ function renderMainPage() {
             groups[primary][secondary]
                 .sort((a,b) => a._score - b._score)
                 .forEach(c => {
+                    // encodeURIComponent on the id when used in the URL
+                    const urlId = encodeURIComponent(c._id);
                     container.innerHTML += `
-                    <a href="index.html?car=${c._id}" style="text-decoration:none;color:inherit;">
+                    <a href="index.html?car=${urlId}" style="text-decoration:none;color:inherit;">
                     <div class="item">
                         <div class="left">
                             <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
@@ -311,8 +351,8 @@ function renderFeaturesTable(car) {
 }
 
 function featureLabel(f) {
-    // Convert snake_case to readable label
-    return f.replace(/_/g, ' ').replace(/\b([a-z])/g, x => x.toUpperCase());
+    // Prefer label from specsheet.json; fallback to internal name (underscores preserved)
+    return featureLabels[f] || f;
 }
 
 function renderBadge(c) {

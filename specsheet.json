@@ -1,0 +1,56 @@
+[
+    [
+        {
+            "name": "Passive Safety",
+            "subcategories":
+            [
+                {
+                    "name": "Secondary Restraints",
+                    "features":
+                    {
+                        "frontal_airbag_driver": "Frontal airbag for the driver",
+                        "frontal_airbag_passenger": "Frontal airbag for the front passenger",
+                        "side_airbag_thorax_front": "Side thorax airbag for front row",
+                        "side_airbag_thorax_rear": "Side thorax airbag for rear row",
+                        "side_airbag_curtain": "Curtain airbags for the first two rows"
+                    }
+                },
+                {
+                    "name": "Primary Restraints",
+                    "features":
+                    {
+                        "three_point_belt_centre": "Three-point ELR seatbelts in 2nd row centre seating position",
+                        "head_restraint_outboard": "Head restraints in 2nd row outboard seating positions",
+                        "head_restraint_outboard_adjustable": "Adjustable head restraints in 2nd row outboard seating positions",
+                        "head_restraint_centre": "Head restraint in 2nd row centre seating position",
+                        "head_restraint_centre_adjustable": "Adjustable head restraint in 2nd row centre seating position",
+                        "isofix_lower_anchorages_outboard": "ISOFIX lower anchorages in outboard rear seats"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Active Safety",
+            "subcategories":
+            [
+                {
+                    "name": "Braking and Stability",
+                    "features":
+                    {
+                        "abs": "Antilock brakes",
+                        "esc": "Electronic Stability Control"
+                    }
+                },
+                {
+                    "name": "Seatbelt Reminders",
+                    "features":
+                    {
+                        "sbr_driver": "Seatbelt reminder for the driver",
+                        "sbr_front_passenger": "Seatbelt reminder for the front passenger",
+                        "sbr_rear": "Seatbelt reminder for rear passengers"
+                    }
+                }
+            ]
+        }
+    ]
+]
