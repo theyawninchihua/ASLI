@@ -9,7 +9,7 @@
                     "features":
                     {
                         "frontal_airbag_driver": "Frontal airbag for the driver",
-                        "frontal_airbag_passenger": "Frontal airbag for the front passenger",
+                        "frontal_airbag_front_passenger": "Frontal airbag for the front passenger",
                         "side_airbag_thorax_front": "Side thorax airbag for front row",
                         "side_airbag_thorax_rear": "Side thorax airbag for rear row",
                         "side_airbag_curtain": "Curtain airbags for the first two rows"
