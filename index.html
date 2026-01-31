@@ -22,6 +22,16 @@ body {
 }
 
 h1 { margin-bottom: 0.4em; }
+.site-header { display:flex; align-items:center; gap:12px; margin-bottom:0.4em; }
+.site-logo { width:64px; height:64px; object-fit:contain; }
+@media (max-width:420px) { .site-logo { width:48px; height:48px; } }
+.site-header h1 { margin:0; }
+
+/* Feature category/subcategory styles used on car page */
+.feature-category { margin-top:1.2em; color:#ccc; font-size:1.05em; }
+.feature-subcategory { margin-top:0.6em; color:#aaa; font-weight:normal; font-size:0.95em; }
+.feature-hr { border:0; border-top:1px solid #444; margin:0.3em 0 0.8em 0; }
+
 h2 { margin-top: 2.2em; color: #ccc; }
 h3 { margin-top: 1.4em; color: #aaa; font-weight: normal; }
 
@@ -115,7 +125,10 @@ select {
 
 <body>
 
-<h1>Auto Safety Library India</h1>
+<div class="site-header">
+    <a href="index.html" aria-label="Home"><img src="logos/logo_positive_square.png" alt="Auto Safety Library India logo" class="site-logo"></a>
+    <h1>Auto Safety Library India</h1>
+</div>
 
 <p>
 Here lies the safety specification of cars that were once sold in India.<br><br>
@@ -164,10 +177,12 @@ const SHEET_CSV_URL =
 
 let cars = [];
 let featureLabels = {}; // mapping internal feature id -> display name (from specsheet.json)
+let specStructure = null; // full spec structure for categories/subcategories
 // Load specsheet.json (optional; fallback to internal names)
 const specPromise = fetch('specsheet.json')
     .then(r => r.ok ? r.json() : Promise.reject('specsheet not found'))
     .then(j => {
+        specStructure = j;
         // spec file may have nested arrays/objects; extract all 'features' maps
         function extract(node) {
             if (!node) return;
@@ -190,6 +205,7 @@ const specPromise = fetch('specsheet.json')
     })
     .catch(() => {
         featureLabels = {};
+        specStructure = null;
     });
 
 // --- Canonical Car ID helpers ---
@@ -339,6 +355,34 @@ function renderCarPage(carId) {
 }
 
 function renderFeaturesTable(car) {
+    // If we have a spec structure, render categories and subcategories
+    if (specStructure) {
+        let html = '';
+        // specStructure could be nested arrays; normalize to array of category objects
+        const cats = Array.isArray(specStructure[0]) ? specStructure[0] : specStructure;
+        cats.forEach(cat => {
+            const catName = cat.name || '';
+            html += `<div class='feature-category'>${catName}</div><div class='feature-hr'></div>`;
+            if (Array.isArray(cat.subcategories)) {
+                cat.subcategories.forEach(sub => {
+                    const subName = sub.name || '';
+                    html += `<div class='feature-subcategory'>${subName}</div>`;
+                    // table for this subcategory
+                    html += `<table style='background:#181818;border:1px solid #333;border-radius:4px;width:100%;max-width:700px;margin-bottom:1.2em;margin-top:0.5em'>`;
+                    html += `<tr><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Feature</th><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Present?</th></tr>`;
+                    const feats = sub.features || {};
+                    Object.keys(feats).forEach(fid => {
+                        const label = feats[fid] || featureLabel(fid) || fid;
+                        const val = (car[fid]||'no').toLowerCase() === 'yes' ? 'Yes' : 'No';
+                        html += `<tr><td style='padding:8px;color:#ccc;'>${label}</td><td style='padding:8px;color:${val==='Yes'?'#0f0':'#c44'};'>${val}</td></tr>`;
+                    });
+                    html += `</table>`;
+                });
+            }
+        });
+        return html;
+    }
+    // Fallback: previous single-table view
     let html = `<table style='background:#181818;border:1px solid #333;border-radius:4px;width:100%;max-width:500px;margin-bottom:1.5em;'>`;
     html += `<tr><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Feature</th><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Present?</th></tr>`;
     for (const f in evaluationProtocol.features) {
