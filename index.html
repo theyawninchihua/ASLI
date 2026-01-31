@@ -29,8 +29,14 @@ h1 { margin-bottom: 0.4em; }
 
 /* Feature category/subcategory styles used on car page */
 .feature-category { margin-top:1.2em; color:#ccc; font-size:1.05em; }
-.feature-subcategory { margin-top:0.6em; color:#aaa; font-weight:normal; font-size:0.95em; }
 .feature-hr { border:0; border-top:1px solid #444; margin:0.3em 0 0.8em 0; }
+
+/* Subcategory boxed layout */
+.sub-box { background:#1e1e1e; border:1px solid #333; border-radius:4px; padding:10px 12px; margin:12px 0; }
+.sub-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.feature-subcategory { margin:0; color:#aaa; font-weight:normal; font-size:0.95em; }
+.sub-score { color:#ccc; font-weight:bold; font-size:0.95em; }
+.sub-box table { margin-top:8px; }
 
 h2 { margin-top: 2.2em; color: #ccc; }
 h3 { margin-top: 1.4em; color: #aaa; font-weight: normal; }
@@ -341,13 +347,10 @@ function renderCarPage(carId) {
         container.innerHTML = `<div style='margin:2em 0;'>Result not found.<br><br><a href='index.html'>Back to list</a></div>`;
         return;
     }
-    // Title
-    container.innerHTML += `<h2 style='margin-bottom:0.2em;'>${car.Year} ${car.Brand} ${car.Model}</h2>`;
-    container.innerHTML += `<div style='color:#ccc;margin-bottom:0.7em;'>${car.Variant} &mdash; ${car["Equipment Level"]} equipment</div>`;
-    // Badge
-    container.innerHTML += `<div style='margin-bottom:1.2em;'>${renderBadge(car)}</div>`;
+    // Reuse the same .item box used on the main page as the page heading (no anchor)
+    container.innerHTML += renderCarBox(car);
     // Score
-    container.innerHTML += `<div style='font-size:1.1em;margin-bottom:1.2em;'>Total score: <b>${car._score}</b></div>`;
+    container.innerHTML += `<div style='font-size:1.1em;margin-bottom:1.2em;margin-top:0.6em;'>Total score: <b>${car._score}</b> max. 100</div>`;
     // Features table
     container.innerHTML += renderFeaturesTable(car);
     // Back link
@@ -366,17 +369,28 @@ function renderFeaturesTable(car) {
             if (Array.isArray(cat.subcategories)) {
                 cat.subcategories.forEach(sub => {
                     const subName = sub.name || '';
-                    html += `<div class='feature-subcategory'>${subName}</div>`;
-                    // table for this subcategory
-                    html += `<table style='background:#181818;border:1px solid #333;border-radius:4px;width:100%;max-width:700px;margin-bottom:1.2em;margin-top:0.5em'>`;
-                    html += `<tr><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Feature</th><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Present?</th></tr>`;
                     const feats = sub.features || {};
+                    // compute subcategory scores
+                    let subMax = 0;
+                    let subScore = 0;
+                    Object.keys(feats).forEach(fid => {
+                        const w = (evaluationProtocol.features[fid] && evaluationProtocol.features[fid].weight) || 0;
+                        subMax += w;
+                        if ((car[fid]||'no').toLowerCase() === 'yes') subScore += w;
+                    });
+                    // render a sub-box containing header (name + score) and the table
+                    html += `<div class='sub-box'>`;
+                    html += `<div class='sub-header'><div class='feature-subcategory'>${subName}</div><div class='sub-score'>${subScore} max. ${subMax}</div></div>`;
+                    html += `<div class='feature-hr'></div>`;
+                    html += `<table style='background:#181818;border:1px solid #333;border-radius:4px;width:100%;max-width:700px;margin-bottom:0;margin-top:0.5em'>`;
+                    html += `<tr><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Feature</th><th style='text-align:left;padding:8px;color:#aaa;font-weight:normal;'>Present?</th></tr>`;
                     Object.keys(feats).forEach(fid => {
                         const label = feats[fid] || featureLabel(fid) || fid;
                         const val = (car[fid]||'no').toLowerCase() === 'yes' ? 'Yes' : 'No';
                         html += `<tr><td style='padding:8px;color:#ccc;'>${label}</td><td style='padding:8px;color:${val==='Yes'?'#0f0':'#c44'};'>${val}</td></tr>`;
                     });
                     html += `</table>`;
+                    html += `</div>`; // .sub-box
                 });
             }
         });
@@ -397,6 +411,19 @@ function renderFeaturesTable(car) {
 function featureLabel(f) {
     // Prefer label from specsheet.json; fallback to internal name (underscores preserved)
     return featureLabels[f] || f;
+}
+
+// Render the same box used on the main page for a single car (no anchor)
+function renderCarBox(c) {
+    return `
+    <div class="item" aria-hidden="true">
+        <div class="left">
+            <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
+            <div class="equipment">with ${c["Equipment Level"]} equipment</div>
+            <div class="variant">${c.Variant}</div>
+        </div>
+        ${renderBadge(c)}
+    </div>`;
 }
 
 function renderBadge(c) {
