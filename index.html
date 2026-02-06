@@ -13,6 +13,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'CMU Serif';
+    src: url('fonts/cmunrm.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 body {
     background: #000;
     color: #eee;
@@ -68,17 +75,28 @@ select {
 
 .item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px;
+    justify-content: flex-start;
+    align-items: stretch; /* make thumb span full height */
+    padding: 0; /* body will supply internal padding */
     margin: 12px 0;
-    background: #1e1e1e;
     border: 1px solid #333;
 }
 
 .left {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0; /* allow text truncation if needed */
+}
+
+.item-body {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #1e1e1e; /* grey region */
+    padding: 14px; /* original padding moved here */
+    flex: 1 1 auto;
+    box-sizing: border-box;
 }
 
 .left .title {
@@ -97,6 +115,26 @@ select {
     color: #ccc;
 }
 
+.item-thumb {
+    /* fixed white region on the left that contains the centered thumbnail */
+    width: 130px; /* fixed region width to allow padding around 110px thumbnail */
+    padding: 8px; /* keep image away from the outer box border */
+    background: #fff;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.item-thumb img {
+    width: 110px; /* thumbnail width (keeps 110x60 ratio) */
+    height: 60px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
 .badge-box {
     width: 140px;
     height: 60px;
@@ -108,6 +146,8 @@ select {
     font-size: 0.75em;
     line-height: 1.1;
     color: black;
+    font-family: Optima, 'CMU Serif', serif;
+    margin-left: auto;
 }
 
 .badge-best {
@@ -288,7 +328,7 @@ function computeScores() {
     Object.values(groups).forEach(list => {
         const maxScore = Math.max(...list.map(c => c._score));
         list.forEach(c => {
-            if (c._score < 20) {
+            if (c._score <= 25) {
                 c._badge = "Not Recommended";
             } else if (c._score >= maxScore - 10) {
                 c._badge = "Best-in-Class";
@@ -313,9 +353,9 @@ function renderMainPage() {
         groups[c[sortBy]][c[other]].push(c);
     });
     Object.keys(groups).sort().forEach(primary => {
-        container.innerHTML += `<h2>${primary}</h2><hr>`;
+        container.innerHTML += `<h2>${sortBy === 'Segment' ? (primary + ' segment') : primary}</h2><hr>`;
         Object.keys(groups[primary]).sort().forEach(secondary => {
-            container.innerHTML += `<h3>${secondary}</h3>`;
+            container.innerHTML += `<h3>${sortBy === 'Year' ? (secondary + ' segment') : secondary}</h3>`;
             groups[primary][secondary]
                 .sort((a,b) => a._score - b._score)
                 .forEach(c => {
@@ -324,12 +364,15 @@ function renderMainPage() {
                     container.innerHTML += `
                     <a href="index.html?car=${urlId}" style="text-decoration:none;color:inherit;">
                     <div class="item">
-                        <div class="left">
-                            <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
-                            <div class="equipment">with ${c["Equipment Level"]} equipment</div>
-                            <div class="variant">${c.Variant}</div>
+                        <div class="item-thumb">${c.Image ? '<img class="item-image" src="' + c.Image + '" alt="Car image">' : ''}</div>
+                        <div class="item-body">
+                            <div class="left">
+                                <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
+                                <div class="equipment">with ${c["Equipment Level"]} equipment</div>
+                                <div class="variant">${c.Variant}</div>
+                            </div>
+                            ${renderBadge(c)}
                         </div>
-                        ${renderBadge(c)}
                     </div>
                     </a>`;
                 });
@@ -417,12 +460,15 @@ function featureLabel(f) {
 function renderCarBox(c) {
     return `
     <div class="item" aria-hidden="true">
-        <div class="left">
-            <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
-            <div class="equipment">with ${c["Equipment Level"]} equipment</div>
-            <div class="variant">${c.Variant}</div>
+        <div class="item-thumb">${c.Image ? '<img class="item-image" src="' + c.Image + '" alt="Car image">' : ''}</div>
+        <div class="item-body">
+            <div class="left">
+                <div class="title">${c.Year} ${c.Brand} ${c.Model}</div>
+                <div class="equipment">with ${c["Equipment Level"]} equipment</div>
+                <div class="variant">${c.Variant}</div>
+            </div>
+            ${renderBadge(c)}
         </div>
-        ${renderBadge(c)}
     </div>`;
 }
 
