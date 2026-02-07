@@ -10,21 +10,21 @@
                     {
                         "frontal_airbag_driver": "Frontal airbag for the driver",
                         "frontal_airbag_front_passenger": "Frontal airbag for the front passenger",
-                        "side_airbag_thorax_front": "Side thorax airbag for front row",
-                        "side_airbag_thorax_rear": "Side thorax airbag for rear row",
-                        "side_airbag_curtain": "Curtain airbags for the first two rows"
+                        "side_airbag_thorax_front": "Thorax-protecting side airbags for the front row",
+                        "side_airbag_thorax_rear": "Thorax-protecting side airbags for the second row",
+                        "side_airbag_curtain": "Head-protecting curtain airbags for the first and second row"
                     }
                 },
                 {
                     "name": "Primary Restraints",
                     "features":
                     {
-                        "three_point_belt_centre": "Three-point ELR seatbelts in 2nd row centre seating position",
-                        "head_restraint_outboard": "Head restraints in 2nd row outboard seating positions",
-                        "head_restraint_outboard_adjustable": "Adjustable head restraints in 2nd row outboard seating positions",
-                        "head_restraint_centre": "Head restraint in 2nd row centre seating position",
-                        "head_restraint_centre_adjustable": "Adjustable head restraint in 2nd row centre seating position",
-                        "isofix_lower_anchorages_outboard": "ISOFIX lower anchorages in outboard rear seats"
+                        "three_point_belt_centre": "Three-point ELR seatbelts in the second row centre seating position",
+                        "head_restraint_outboard": "Head restraints in the second row outboard seating positions",
+                        "head_restraint_outboard_adjustable": "Adjustable head restraints in the second row outboard seating positions",
+                        "head_restraint_centre": "Head restraint in the second row centre seating position",
+                        "head_restraint_centre_adjustable": "Adjustable head restraint in the second row centre seating position",
+                        "isofix_lower_anchorages_outboard": "ISOFIX lower anchorages in the outboard rear seats"
                     }
                 }
             ]
@@ -37,7 +37,7 @@
                     "name": "Braking and Stability",
                     "features":
                     {
-                        "abs": "Antilock brakes",
+                        "abs": "Anti-lock brakes",
                         "esc": "Electronic Stability Control"
                     }
                 },

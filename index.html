@@ -330,7 +330,8 @@ function computeScores() {
         list.forEach(c => {
             if (c._score <= 25) {
                 c._badge = "Not Recommended";
-            } else if (c._score >= maxScore - 10) {
+            } else if (c._score >= maxScore - 10 && c._score >= 50) {
+                // must be within 10 points of the segment max AND have score >= 50
                 c._badge = "Best-in-Class";
             } else {
                 c._badge = "";
