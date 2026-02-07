@@ -187,7 +187,7 @@ A vehicle might have had multiple specifications during a model year. There is n
         Sort by:
         <select id="sortBy">
             <option value="Year">Year</option>
-            <option value="Segment">Segment</option>
+            <option value="Segment">Segment/Body Style</option>
         </select>
     </div>
 </div>
@@ -311,9 +311,11 @@ function init(data) {
 }
 
 function computeScores() {
+    const DELIM = '|||';
+    function comboKeyForScore(c) { return `${c.Year}-${c.Segment || ''}${DELIM}${c['Body Style'] || ''}`; }
     const groups = {};
     cars.forEach(c => {
-        const key = `${c.Year}-${c.Segment}`;
+        const key = comboKeyForScore(c);
         groups[key] = groups[key] || [];
         groups[key].push(c);
         let score = 0; 
@@ -343,21 +345,35 @@ function computeScores() {
 // --- Main page rendering ---
 function renderMainPage() {
     document.getElementById('main-controls').style.display = '';
-    const sortBy = document.getElementById("sortBy").value;
-    const other = sortBy === "Year" ? "Segment" : "Year";
+        const sortBy = document.getElementById("sortBy").value;
+    const groupingIsYear = sortBy === "Year";
     const container = document.getElementById("results");
     container.innerHTML = "";
+    const DELIM = '|||';
+    function comboKey(c) { return `${c.Segment || ''}${DELIM}${c['Body Style'] || ''}`; }
+    function comboLabelFromKey(key) {
+        const parts = String(key).split(DELIM);
+        const seg = parts[0] || '';
+        const body = parts[1] || '';
+        return body ? (seg + ' segment ' + body) : (seg + ' segment');
+    }
+
     const groups = {};
     cars.forEach(c => {
-        groups[c[sortBy]] = groups[c[sortBy]] || {};
-        groups[c[sortBy]][c[other]] = groups[c[sortBy]][c[other]] || [];
-        groups[c[sortBy]][c[other]].push(c);
+        const primary = groupingIsYear ? String(c.Year) : comboKey(c);
+        const secondary = groupingIsYear ? comboKey(c) : String(c.Year);
+        groups[primary] = groups[primary] || {};
+        groups[primary][secondary] = groups[primary][secondary] || [];
+        groups[primary][secondary].push(c);
     });
-    Object.keys(groups).sort().forEach(primary => {
-        container.innerHTML += `<h2>${sortBy === 'Segment' ? (primary + ' segment') : primary}</h2><hr>`;
-        Object.keys(groups[primary]).sort().forEach(secondary => {
-            container.innerHTML += `<h3>${sortBy === 'Year' ? (secondary + ' segment') : secondary}</h3>`;
-            groups[primary][secondary]
+
+    Object.keys(groups).sort().forEach(primaryKey => {
+        const primaryLabel = groupingIsYear ? primaryKey : comboLabelFromKey(primaryKey);
+        container.innerHTML += `<h2>${primaryLabel}</h2><hr>`;
+        Object.keys(groups[primaryKey]).sort().forEach(secondaryKey => {
+            const secondaryLabel = groupingIsYear ? comboLabelFromKey(secondaryKey) : secondaryKey;
+            container.innerHTML += `<h3>${secondaryLabel}</h3>`;
+            groups[primaryKey][secondaryKey]
                 .sort((a,b) => a._score - b._score)
                 .forEach(c => {
                     // encodeURIComponent on the id when used in the URL
@@ -480,10 +496,11 @@ function renderBadge(c) {
             <div class="main">Not<br>Recommended</div>
         </div>`;
     }
+    const body = c['Body Style'] ? (' ' + c['Body Style']) : '';
     return `<div class="badge-box badge-best">
-        <div class="small">${c.Segment}-segment</div>
-        <div class="main">Best-in-Class</div>
         <div class="small">${c.Year}</div>
+        <div class="main">Best-in-Class</div>
+        <div class="small">${c.Segment}-segment${body}</div>
     </div>`;
 }
 
