@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FAQs - Auto Safety Library India</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+@font-face {
+    font-family: 'CMU Sans Serif';
+    src: url('fonts/cmunss.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'CMU Serif';
+    src: url('fonts/cmunrm.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    background: #000;
+    color: #eee;
+    font-family: 'CMU Sans Serif', system-ui, sans-serif;
+    margin: 40px auto;
+    max-width: 900px;
+}
+
+h1 { margin-bottom: 0.4em; }
+.site-header { display:flex; align-items:center; gap:12px; margin-bottom:0.4em; }
+.site-logo { width:64px; height:64px; object-fit:contain; }
+@media (max-width:420px) { .site-logo { width:48px; height:48px; } }
+.site-header h1 { margin:0; }
+
+h2 { margin-top: 2.2em; color: #ccc; }
+h3 { margin-top: 1.4em; color: #aaa; font-weight: normal; }
+
+hr {
+    border: 0;
+    border-top: 1px solid #444;
+    margin-bottom: 1.2em;
+}
+
+p {
+    color: #bbb;
+    max-width: 800px;
+    line-height: 1.45;
+}
+
+.faq-item {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 0;
+    margin: 16px 0;
+    overflow: hidden;
+}
+
+.faq-question {
+    padding: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e1e1e;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: #fff;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+.faq-question:hover {
+    background: #252525;
+}
+
+.faq-toggle {
+    color: #aaa;
+    font-size: 1.3em;
+    font-weight: normal;
+}
+
+.faq-answer {
+    padding: 14px;
+    background: #0a0a0a;
+    border-top: 1px solid #333;
+    color: #ccc;
+    line-height: 1.45;
+    max-width: 700px;
+    display: none;
+}
+
+.faq-answer.open {
+    display: block;
+}
+</style>
+</head>
+
+<body>
+
+<div class="site-header">
+    <a href="index.html" aria-label="Home"><img src="logos/logo_positive_square.png" alt="Auto Safety Library India logo" class="site-logo"></a>
+    <h1>Auto Safety Library India</h1>
+</div>
+
+<h2>Frequently Asked Questions</h2>
+<hr>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>What is Auto Safety Library India?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>Auto Safety Library India is The Yawning Chihuahua's archival project to document the safety specification (and safety performance, where available) of discontinued cars sold in India, with the aim of helping used car buyers make safer choices.</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>How is the score calculated?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>The total score is a weighted average of indicators of fitment of different safety features.</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>What cars are selected?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>In theory, any M1 or N1 vehicles that have been sold in India at some point in history may be selected for inclusion. More cars will be added periodically, and ASLI will decide what vehicles to select based on popularity, relevance, or historical significance. However, no guarantee can be made about the inclusion of any model, due to limited availability of historical information like brochures.</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>Since cars are available in multiple variants, which ones are evaluated?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>All cars selected are evaluated at least with their standard safety specification. If cars offer safety equipment as optional, then the variant with the highest optional safety specification (but only factory fitments) is also evaluated. ASLI understands that information about middle variants is also very relevant, but cannot include every variant due to resource constraints.</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>Where is the information sourced from? Can I trust it?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>ASLI makes a "best-effort" attempt to accurately obtain the safety specification of a car in a given year. The safety specification of vehicles is manually extracted from publicly available information like brochures. A few notable sources are:<br><br> - <a href="autocatalogarchive.com">Auto Catalog Archive</a><br> - <a href="https://www.team-bhp.com/forum/indian-car-scene/222595-brochure-corner-attach-discontinued-car-brochures-here.html">The Team-BHP Brochure Corner thread</a><br><br>However, the quality of information presented here may be affected by unreliable sources, human error, as well as the fact that vehicle safety specification often changes within a given year, and not exactly in time for a new year.<br><br>ASLI assumes no responsibility for damages including, but not limited to, loss of property or life resulting from information presented.</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>What does the "Best-in-Class" badge mean?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>Judging more affordable or older cars to the same standards as newer or more expensive ones would be unhelpful to consumers at different budgets. To ensure that differences in age and segment are not a barrier to the consumer advice presented, ASLI awards a Best-in-Class plaque to a vehicle when:<br><br> - The vehicle has a total score not less than 50, and within 10 points of the best-scoring vehicle <b>from the same year, segment, and body style</b><br> - All known vehicles from that year, segment, and body style have been evaluated.<br> - The car does not qualify for a "Not Recommended" badge</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>What does the "Not Recommended" badge mean?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>The "Not Recommended" badge is awarded to vehicles with a total score less than 25 points. This is a blanket rule regardless of segment or age. Earning a "Not Recommended" badge disqualifies a vehicle from earning "Best-in-Class".</p>
+    </div>
+</div>
+
+<div class="faq-item">
+    <button class="faq-question" onclick="toggleFaq(this)">
+        <span>Why are NCAP ratings not included? Are safety features more important than safety performance?</span>
+        <span class="faq-toggle">+</span>
+    </button>
+    <div class="faq-answer">
+        <p>Independent consumer crash testing remains the only objective way for consumers to estimate the safety performance of vehicles. Safety specification (shown here) does not imply safety performance. This is especially important because many of the cars ASLI lists were not even subject to the basic UN-equivalent Indian government crash test regulations (AIS 98 and 99) introduced for all cars in October 2019. A vehicle with a range of safety features that perform poorly even in industry-standard tests might offer little or no advantage in protection.<br><br>However, due to the limited scope of Global NCAP's #SaferCarsForIndia project, ASLI cannot consider the lack of a Global NCAP rating a disadvantage, as it would be unfair to many cars.<br><br>Nor can ASLI reliably make conclusions based on results from other NCAPs or brand stereotypes, because experience has shown that Indian versions of cars that have the same name and appearance, or are even made in the same plant, as those tested by Euro NCAP/ASEAN NCAP/Latin NCAP/IIHS/etc. may perform differently when Indian-market versions are tested.</p>
+    </div>
+</div>
+
+<div style='margin-top:2em;'><a href='index.html'>&larr; Back to list</a></div>
+
+<script>
+function toggleFaq(button) {
+    const answer = button.nextElementSibling;
+    const toggle = button.querySelector('.faq-toggle');
+    
+    // Close all other FAQs
+    document.querySelectorAll('.faq-answer').forEach(a => {
+        if (a !== answer) {
+            a.classList.remove('open');
+            a.previousElementSibling.querySelector('.faq-toggle').textContent = '+';
+        }
+    });
+    
+    // Toggle current FAQ
+    answer.classList.toggle('open');
+    toggle.textContent = answer.classList.contains('open') ? '−' : '+';
+}
+</script>
+
+</body>
+</html>
