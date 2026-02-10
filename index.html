@@ -183,11 +183,24 @@ ASLI can help used car buyers make safer choices. <a href="faqs.html">Read impor
 
 <div id="controls-container">
     <div class="controls" id="main-controls">
-        Sort by:
-        <select id="sortBy">
-            <option value="Year">Year</option>
-            <option value="Segment">Segment/Body Style</option>
-        </select>
+        <div style="margin-top:0.0rem;">
+            Filter by:
+            <select id="filterYear">
+                <option value="">All years</option>
+            </select>
+            <select id="filterSegment">
+                <option value="">All segments</option>
+            </select>
+            <select id="filterBodyStyle">
+                <option value="">All body styles</option>
+            </select>
+            <select id="filterBrand">
+                <option value="">All brands</option>
+            </select>
+            <select id="filterEquipment">
+                <option value="">All equipment levels</option>
+            </select>
+        </div>
     </div>
 </div>
 <div id="results"></div>
@@ -303,9 +316,14 @@ function init(data) {
     // Wait for specsheet (labels) to be ready before routing/rendering,
     // but proceed even if specPromise fails.
     specPromise.finally(() => {
+        // populate filter dropdowns, then route; attach handlers
+        populateFilters();
         route();
-        // Attach sort handler only for main page
-        document.getElementById("sortBy").onchange = route;
+        // attach filter handlers
+        ['filterYear','filterSegment','filterBodyStyle','filterBrand','filterEquipment'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.onchange = route;
+        });
     });
 }
 
@@ -341,11 +359,58 @@ function computeScores() {
     });
 }
 
+// --- Filters: populate and matching ---
+function populateFilters() {
+    // collect unique values
+    const years = new Set();
+    const segments = new Set();
+    const bodyStyles = new Set();
+    const brands = new Set();
+    const equipments = new Set();
+    cars.forEach(c => {
+        if (c.Year) years.add(String(c.Year));
+        if (c.Segment) segments.add(c.Segment);
+        if (c['Body Style']) bodyStyles.add(c['Body Style']);
+        if (c.Brand) brands.add(c.Brand);
+        if (c['Equipment Level']) equipments.add(c['Equipment Level']);
+    });
+    addOptions('filterYear', Array.from(years).sort());
+    addOptions('filterSegment', Array.from(segments).sort());
+    addOptions('filterBodyStyle', Array.from(bodyStyles).sort());
+    addOptions('filterBrand', Array.from(brands).sort());
+    addOptions('filterEquipment', Array.from(equipments).sort());
+}
+
+function addOptions(selectId, values) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    // keep first option (All) and append values
+    values.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+    });
+}
+
+function matchesFilter(car) {
+    const fy = document.getElementById('filterYear')?.value || '';
+    const fs = document.getElementById('filterSegment')?.value || '';
+    const fb = document.getElementById('filterBodyStyle')?.value || '';
+    const fbr = document.getElementById('filterBrand')?.value || '';
+    const fe = document.getElementById('filterEquipment')?.value || '';
+    if (fy && String(car.Year) !== fy) return false;
+    if (fs && (car.Segment || '') !== fs) return false;
+    if (fb && (car['Body Style'] || '') !== fb) return false;
+    if (fbr && (car.Brand || '') !== fbr) return false;
+    if (fe && (car['Equipment Level'] || '') !== fe) return false;
+    return true;
+}
+
 // --- Main page rendering ---
 function renderMainPage() {
+    // always show filters
     document.getElementById('main-controls').style.display = '';
-        const sortBy = document.getElementById("sortBy").value;
-    const groupingIsYear = sortBy === "Year";
     const container = document.getElementById("results");
     container.innerHTML = "";
     const DELIM = '|||';
@@ -357,27 +422,29 @@ function renderMainPage() {
         return body ? (seg + ' segment ' + body) : (seg + ' segment');
     }
 
+    // group by year -> (segment+body style)
     const groups = {};
     cars.forEach(c => {
-        const primary = groupingIsYear ? String(c.Year) : comboKey(c);
-        const secondary = groupingIsYear ? comboKey(c) : String(c.Year);
+        const primary = String(c.Year);
+        const secondary = comboKey(c);
         groups[primary] = groups[primary] || {};
         groups[primary][secondary] = groups[primary][secondary] || [];
         groups[primary][secondary].push(c);
     });
 
+    // For each year, build its content from non-empty secondary groups.
     Object.keys(groups).sort().forEach(primaryKey => {
-        const primaryLabel = groupingIsYear ? primaryKey : comboLabelFromKey(primaryKey);
-        container.innerHTML += `<h2>${primaryLabel}</h2><hr>`;
-        Object.keys(groups[primaryKey]).sort().forEach(secondaryKey => {
-            const secondaryLabel = groupingIsYear ? comboLabelFromKey(secondaryKey) : secondaryKey;
-            container.innerHTML += `<h3>${secondaryLabel}</h3>`;
-            groups[primaryKey][secondaryKey]
-                .sort((a,b) => a._score - b._score)
-                .forEach(c => {
-                    // encodeURIComponent on the id when used in the URL
-                    const urlId = encodeURIComponent(c._id);
-                    container.innerHTML += `
+        let primaryContent = '';
+        const secondaryKeys = Object.keys(groups[primaryKey]).sort();
+        secondaryKeys.forEach(secondaryKey => {
+            const sortedList = groups[primaryKey][secondaryKey].slice().sort((a,b) => a._score - b._score);
+            const visible = sortedList.filter(c => matchesFilter(c));
+            if (visible.length === 0) return; // skip empty segment/body groups
+            const secondaryLabel = comboLabelFromKey(secondaryKey);
+            primaryContent += `<h3>${secondaryLabel}</h3>`;
+            visible.forEach(c => {
+                const urlId = encodeURIComponent(c._id);
+                primaryContent += `
                     <a href="index.html?car=${urlId}" style="text-decoration:none;color:inherit;">
                     <div class="item">
                         <div class="item-thumb">${c.Image ? '<img class="item-image" src="' + c.Image + '" alt="Car image">' : ''}</div>
@@ -391,8 +458,12 @@ function renderMainPage() {
                         </div>
                     </div>
                     </a>`;
-                });
+            });
         });
+        if (primaryContent) {
+            const primaryLabel = primaryKey;
+            container.innerHTML += `<h2>${primaryLabel}</h2><hr>` + primaryContent;
+        }
     });
 }
 
